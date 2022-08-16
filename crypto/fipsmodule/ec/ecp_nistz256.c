@@ -587,9 +587,10 @@ void GFp_nistz256_mul_mont(Limb r[P256_LIMBS], const Limb a[P256_LIMBS],
   fiat_p256_mul(r, a, b);
 }
 
+/*
 void GFp_nistz256_sqr_mont(Limb r[P256_LIMBS], const Limb a[P256_LIMBS]) {
   fiat_p256_square(r, a);
-}
+}*/
 
 void GFp_nistz256_point_double(P256_POINT *r, const P256_POINT *a) {
   fiat_p256_point_double(r->X, r->Y, r->Z,
