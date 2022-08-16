@@ -149,6 +149,10 @@ def run():
         print(f"    mod {mod_name};")
         with open(rs_file, "r") as src_file:
             with open(f"src/c2rust/{mod_name}.rs", "w") as dest_file:
+                print("#![allow(non_camel_case_types)]", file=dest_file)
+                print("#![allow(non_snake_case)]", file=dest_file)
+                print("#![allow(non_upper_case_globals)]", file=dest_file)
+                print("#![allow(unused_mut)]", file=dest_file) # this is dubious, let's fix these with another pass later on.
                 print("extern crate std;", file=dest_file)
                 #print("use core::ffi::*;", file=dest_file)
                 for line in src_file:
