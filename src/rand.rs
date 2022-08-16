@@ -174,6 +174,9 @@ impl crate::sealed::Sealed for SystemRandom {}
 ))]
 use self::sysrand::fill as fill_impl;
 
+#[cfg(target_os = "xous")]
+use crate::xous_rand::fill_impl;
+
 #[cfg(all(
     any(target_os = "android", target_os = "linux"),
     feature = "dev_urandom_fallback"
