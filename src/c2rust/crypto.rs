@@ -3,6 +3,3 @@
 #![allow(non_upper_case_globals)]
 #![allow(unused_mut)]
 extern crate std;
-
-
-
