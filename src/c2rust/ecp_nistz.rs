@@ -12,7 +12,7 @@ extern "C" {
         __function: *const std::os::raw::c_char,
     ) -> !;
 }
-pub type size_t = u64;
+pub type size_t = std::os::raw::c_uint;
 pub type __uint8_t = std::os::raw::c_uchar;
 pub type __uint32_t = std::os::raw::c_uint;
 pub type uint8_t = __uint8_t;
@@ -28,8 +28,8 @@ pub unsafe extern "C" fn gfp_little_endian_bytes_from_scalar(
 ) {
     if str_len
         == num_limbs
-            .wrapping_mul(std::mem::size_of::<Limb>() as u64)
-            .wrapping_add(1 as std::os::raw::c_int as u64)
+            .wrapping_mul(std::mem::size_of::<Limb>() as u32)
+            .wrapping_add(1 as std::os::raw::c_int as std::os::raw::c_uint)
     {
     } else {
         __assert_fail(
@@ -48,38 +48,40 @@ b"void gfp_little_endian_bytes_from_scalar(uint8_t *, size_t, const Limb *, size
     }
     let mut i: size_t = 0;
     i = 0 as std::os::raw::c_int as size_t;
-    while i < num_limbs.wrapping_mul(std::mem::size_of::<Limb>() as u64) {
+    while i < num_limbs.wrapping_mul(std::mem::size_of::<Limb>() as u32) {
         let mut d: Limb =
-            *scalar.offset(i.wrapping_div(std::mem::size_of::<Limb>() as u64) as isize);
-        *str.offset(i.wrapping_add(0 as std::os::raw::c_int as u64) as isize) =
+            *scalar.offset(i.wrapping_div(std::mem::size_of::<Limb>() as u32) as isize);
+        *str.offset(i.wrapping_add(0 as std::os::raw::c_int as std::os::raw::c_uint) as isize) =
             (d & 0xff as std::os::raw::c_int as std::os::raw::c_uint) as uint8_t;
-        *str.offset(i.wrapping_add(1 as std::os::raw::c_int as u64) as isize) =
+        *str.offset(i.wrapping_add(1 as std::os::raw::c_int as std::os::raw::c_uint) as isize) =
             (d >> 8 as std::os::raw::c_int & 0xff as std::os::raw::c_int as std::os::raw::c_uint)
                 as uint8_t;
-        *str.offset(i.wrapping_add(2 as std::os::raw::c_int as u64) as isize) =
+        *str.offset(i.wrapping_add(2 as std::os::raw::c_int as std::os::raw::c_uint) as isize) =
             (d >> 16 as std::os::raw::c_int & 0xff as std::os::raw::c_int as std::os::raw::c_uint)
                 as uint8_t;
         d >>= 24 as std::os::raw::c_int;
-        *str.offset(i.wrapping_add(3 as std::os::raw::c_int as u64) as isize) =
+        *str.offset(i.wrapping_add(3 as std::os::raw::c_int as std::os::raw::c_uint) as isize) =
             (d & 0xff as std::os::raw::c_int as std::os::raw::c_uint) as uint8_t;
-        if std::mem::size_of::<Limb>() as u64 == 8 as std::os::raw::c_int as u64 {
+        if std::mem::size_of::<Limb>() as u32 == 8 as std::os::raw::c_int as std::os::raw::c_uint {
             d >>= 8 as std::os::raw::c_int;
-            *str.offset(i.wrapping_add(4 as std::os::raw::c_int as u64) as isize) =
-                (d & 0xff as std::os::raw::c_int as std::os::raw::c_uint) as uint8_t;
-            *str.offset(i.wrapping_add(5 as std::os::raw::c_int as u64) as isize) = (d
-                >> 8 as std::os::raw::c_int
-                & 0xff as std::os::raw::c_int as std::os::raw::c_uint)
-                as uint8_t;
-            *str.offset(i.wrapping_add(6 as std::os::raw::c_int as u64) as isize) = (d
-                >> 16 as std::os::raw::c_int
-                & 0xff as std::os::raw::c_int as std::os::raw::c_uint)
-                as uint8_t;
-            *str.offset(i.wrapping_add(7 as std::os::raw::c_int as u64) as isize) = (d
-                >> 24 as std::os::raw::c_int
-                & 0xff as std::os::raw::c_int as std::os::raw::c_uint)
-                as uint8_t;
+            *str.offset(
+                i.wrapping_add(4 as std::os::raw::c_int as std::os::raw::c_uint) as isize,
+            ) = (d & 0xff as std::os::raw::c_int as std::os::raw::c_uint) as uint8_t;
+            *str.offset(
+                i.wrapping_add(5 as std::os::raw::c_int as std::os::raw::c_uint) as isize,
+            ) = (d >> 8 as std::os::raw::c_int
+                & 0xff as std::os::raw::c_int as std::os::raw::c_uint) as uint8_t;
+            *str.offset(
+                i.wrapping_add(6 as std::os::raw::c_int as std::os::raw::c_uint) as isize,
+            ) = (d >> 16 as std::os::raw::c_int
+                & 0xff as std::os::raw::c_int as std::os::raw::c_uint) as uint8_t;
+            *str.offset(
+                i.wrapping_add(7 as std::os::raw::c_int as std::os::raw::c_uint) as isize,
+            ) = (d >> 24 as std::os::raw::c_int
+                & 0xff as std::os::raw::c_int as std::os::raw::c_uint) as uint8_t;
         }
-        i = (i as u64).wrapping_add(std::mem::size_of::<Limb>() as u64) as size_t as size_t;
+        i = (i as std::os::raw::c_uint).wrapping_add(std::mem::size_of::<Limb>() as u32) as size_t
+            as size_t;
     }
     while i < str_len {
         *str.offset(i as isize) = 0 as std::os::raw::c_int as uint8_t;

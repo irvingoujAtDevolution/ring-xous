@@ -14,7 +14,7 @@ extern "C" {
     ) -> !;
     fn GFp_limbs_mul_add_limb(r: *mut Limb, a: *const Limb, b: Limb, num_limbs: size_t) -> Limb;
 }
-pub type size_t = u64;
+pub type size_t = std::os::raw::c_uint;
 pub type __uint32_t = std::os::raw::c_uint;
 pub type __uint64_t = u64;
 pub type uint32_t = __uint32_t;
@@ -67,7 +67,7 @@ unsafe extern "C" fn limbs_sub(
     mut b: *const Limb,
     mut num_limbs: size_t,
 ) -> Carry {
-    if num_limbs >= 1 as std::os::raw::c_int as u64 {
+    if num_limbs >= 1 as std::os::raw::c_int as std::os::raw::c_uint {
     } else {
         __assert_fail(
             b"num_limbs >= 1\0" as *const u8 as *const std::os::raw::c_char,
@@ -107,9 +107,9 @@ pub unsafe extern "C" fn GFp_bn_from_montgomery_in_place(
     mut num_n: size_t,
     mut n0_: *const BN_ULONG,
 ) -> std::os::raw::c_int {
-    if num_n == 0 as std::os::raw::c_int as u64
+    if num_n == 0 as std::os::raw::c_int as std::os::raw::c_uint
         || num_r != num_n
-        || num_a != (2 as std::os::raw::c_int as u64).wrapping_mul(num_n)
+        || num_a != (2 as std::os::raw::c_int as std::os::raw::c_uint).wrapping_mul(num_n)
     {
         return 0 as std::os::raw::c_int;
     }
@@ -154,7 +154,7 @@ pub unsafe extern "C" fn GFp_bn_mul_mont(
     mut n0: *const BN_ULONG,
     mut num: size_t,
 ) {
-    let vla = (2 as std::os::raw::c_int as u64).wrapping_mul(num) as usize;
+    let vla = (2 as std::os::raw::c_int as std::os::raw::c_uint).wrapping_mul(num) as usize;
     let mut tmp: std::vec::Vec<Limb> = std::vec::from_elem(0, vla);
     let mut i: size_t = 0 as std::os::raw::c_int as size_t;
     while i < num {
@@ -175,7 +175,7 @@ pub unsafe extern "C" fn GFp_bn_mul_mont(
         rp,
         num,
         tmp.as_mut_ptr(),
-        (2 as std::os::raw::c_int as u64).wrapping_mul(num),
+        (2 as std::os::raw::c_int as std::os::raw::c_uint).wrapping_mul(num),
         np,
         num,
         n0,

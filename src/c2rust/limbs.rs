@@ -13,7 +13,7 @@ extern "C" {
         __function: *const std::os::raw::c_char,
     ) -> !;
 }
-pub type size_t = u64;
+pub type size_t = std::os::raw::c_uint;
 pub type __uint32_t = std::os::raw::c_uint;
 pub type __uint64_t = u64;
 pub type uint32_t = __uint32_t;
@@ -31,9 +31,9 @@ unsafe extern "C" fn value_barrier_w(mut a: crypto_word) -> crypto_word {
 #[inline]
 unsafe extern "C" fn constant_time_msb_w(mut a: crypto_word) -> crypto_word {
     return (0 as std::os::raw::c_uint).wrapping_sub(
-        a >> (std::mem::size_of::<crypto_word>() as u64)
-            .wrapping_mul(8 as std::os::raw::c_int as u64)
-            .wrapping_sub(1 as std::os::raw::c_int as u64),
+        a >> (std::mem::size_of::<crypto_word>() as u32)
+            .wrapping_mul(8 as std::os::raw::c_int as std::os::raw::c_uint)
+            .wrapping_sub(1 as std::os::raw::c_int as std::os::raw::c_uint),
     );
 }
 #[inline]
@@ -122,7 +122,7 @@ unsafe extern "C" fn limbs_add(
     mut b: *const Limb,
     mut num_limbs: size_t,
 ) -> Carry {
-    if num_limbs >= 1 as std::os::raw::c_int as u64 {
+    if num_limbs >= 1 as std::os::raw::c_int as std::os::raw::c_uint {
     } else {
         __assert_fail(
             b"num_limbs >= 1\0" as *const u8 as *const std::os::raw::c_char,
@@ -158,7 +158,7 @@ unsafe extern "C" fn limbs_sub(
     mut b: *const Limb,
     mut num_limbs: size_t,
 ) -> Carry {
-    if num_limbs >= 1 as std::os::raw::c_int as u64 {
+    if num_limbs >= 1 as std::os::raw::c_int as std::os::raw::c_uint {
     } else {
         __assert_fail(
             b"num_limbs >= 1\0" as *const u8 as *const std::os::raw::c_char,
@@ -202,7 +202,7 @@ unsafe extern "C" fn limbs_select(
     }
     let mut e: size_t = 0 as std::os::raw::c_int as size_t;
     while e < num_entries {
-        let mut equal: Limb = constant_time_eq_w(index, e as crypto_word);
+        let mut equal: Limb = constant_time_eq_w(index, e);
         let mut i_0: size_t = 0 as std::os::raw::c_int as size_t;
         while i_0 < num_limbs {
             *r.offset(i_0 as isize) = constant_time_select_w(
@@ -253,10 +253,10 @@ pub unsafe extern "C" fn LIMBS_equal_limb(
     mut b: Limb,
     mut num_limbs: size_t,
 ) -> Limb {
-    if num_limbs == 0 as std::os::raw::c_int as u64 {
+    if num_limbs == 0 as std::os::raw::c_int as std::os::raw::c_uint {
         return constant_time_is_zero_w(b);
     }
-    if num_limbs >= 1 as std::os::raw::c_int as u64 {
+    if num_limbs >= 1 as std::os::raw::c_int as std::os::raw::c_uint {
     } else {
         __assert_fail(
             b"num_limbs >= 1\0" as *const u8 as *const std::os::raw::c_char,
@@ -271,14 +271,14 @@ pub unsafe extern "C" fn LIMBS_equal_limb(
     let mut lo_equal: Limb = constant_time_eq_w(*a.offset(0 as std::os::raw::c_int as isize), b);
     let mut hi_zero: Limb = LIMBS_are_zero(
         &*a.offset(1 as std::os::raw::c_int as isize),
-        num_limbs.wrapping_sub(1 as std::os::raw::c_int as u64),
+        num_limbs.wrapping_sub(1 as std::os::raw::c_int as std::os::raw::c_uint),
     );
     return constant_time_select_w(lo_equal, hi_zero, 0 as std::os::raw::c_int as crypto_word);
 }
 #[no_mangle]
 pub unsafe extern "C" fn LIMBS_are_even(mut a: *const Limb, mut num_limbs: size_t) -> Limb {
     let mut lo: Limb = 0;
-    if num_limbs == 0 as std::os::raw::c_int as u64 {
+    if num_limbs == 0 as std::os::raw::c_int as std::os::raw::c_uint {
         lo = 0 as std::os::raw::c_int as Limb;
     } else {
         lo = *a.offset(0 as std::os::raw::c_int as isize);
@@ -291,7 +291,7 @@ pub unsafe extern "C" fn LIMBS_less_than(
     mut b: *const Limb,
     mut num_limbs: size_t,
 ) -> Limb {
-    if num_limbs >= 1 as std::os::raw::c_int as u64 {
+    if num_limbs >= 1 as std::os::raw::c_int as std::os::raw::c_uint {
     } else {
         __assert_fail(
             b"num_limbs >= 1\0" as *const u8 as *const std::os::raw::c_char,
@@ -327,7 +327,7 @@ pub unsafe extern "C" fn LIMBS_less_than_limb(
     mut b: Limb,
     mut num_limbs: size_t,
 ) -> Limb {
-    if num_limbs >= 1 as std::os::raw::c_int as u64 {
+    if num_limbs >= 1 as std::os::raw::c_int as std::os::raw::c_uint {
     } else {
         __assert_fail(
             b"num_limbs >= 1\0" as *const u8 as *const std::os::raw::c_char,
@@ -347,7 +347,7 @@ pub unsafe extern "C" fn LIMBS_less_than_limb(
     ));
     let mut hi: Limb = LIMBS_are_zero(
         &*a.offset(1 as std::os::raw::c_int as isize),
-        num_limbs.wrapping_sub(1 as std::os::raw::c_int as u64),
+        num_limbs.wrapping_sub(1 as std::os::raw::c_int as std::os::raw::c_uint),
     );
     return constant_time_select_w(lo, hi, lo);
 }
@@ -357,7 +357,7 @@ pub unsafe extern "C" fn LIMBS_reduce_once(
     mut m: *const Limb,
     mut num_limbs: size_t,
 ) {
-    if num_limbs >= 1 as std::os::raw::c_int as u64 {
+    if num_limbs >= 1 as std::os::raw::c_int as std::os::raw::c_uint {
     } else {
         __assert_fail(
             b"num_limbs >= 1\0" as *const u8 as *const std::os::raw::c_char,
@@ -454,10 +454,11 @@ pub unsafe extern "C" fn LIMBS_shl_mod(
     mut num_limbs: size_t,
 ) {
     let mut overflow1: Limb = constant_time_is_nonzero_w(
-        *a.offset(num_limbs.wrapping_sub(1 as std::os::raw::c_int as u64) as isize)
-            & (1 as std::os::raw::c_int as Limb)
-                << (32 as std::os::raw::c_uint)
-                    .wrapping_sub(1 as std::os::raw::c_int as std::os::raw::c_uint),
+        *a.offset(
+            num_limbs.wrapping_sub(1 as std::os::raw::c_int as std::os::raw::c_uint) as isize,
+        ) & (1 as std::os::raw::c_int as Limb)
+            << (32 as std::os::raw::c_uint)
+                .wrapping_sub(1 as std::os::raw::c_int as std::os::raw::c_uint),
     );
     let mut carry: Limb = 0 as std::os::raw::c_int as Limb;
     let mut i: size_t = 0 as std::os::raw::c_int as size_t;
@@ -497,8 +498,8 @@ pub unsafe extern "C" fn LIMBS_select_512_32(
 ) -> std::os::raw::c_int {
     if num_limbs.wrapping_rem(
         (512 as std::os::raw::c_int as std::os::raw::c_uint)
-            .wrapping_div(32 as std::os::raw::c_uint) as u64,
-    ) != 0 as std::os::raw::c_int as u64
+            .wrapping_div(32 as std::os::raw::c_uint),
+    ) != 0 as std::os::raw::c_int as std::os::raw::c_uint
     {
         return 0 as std::os::raw::c_int;
     }
@@ -519,7 +520,7 @@ pub unsafe extern "C" fn LIMBS_window5_split_window(
     mut index_within_word: size_t,
 ) -> crypto_word {
     let mut high_bits: Limb = higher_limb
-        << (32 as std::os::raw::c_uint as u64).wrapping_sub(index_within_word)
+        << (32 as std::os::raw::c_uint).wrapping_sub(index_within_word)
         & FIVE_BITS_MASK;
     let mut low_bits: Limb = lower_limb >> index_within_word;
     return low_bits | high_bits;

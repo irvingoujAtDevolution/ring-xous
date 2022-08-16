@@ -4,7 +4,7 @@
 #![allow(unused_mut)]
 extern crate std;
 
-pub type size_t = u64;
+pub type size_t = std::os::raw::c_uint;
 pub type __uint8_t = std::os::raw::c_uchar;
 pub type uint8_t = __uint8_t;
 #[no_mangle]

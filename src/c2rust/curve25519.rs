@@ -10,15 +10,15 @@ extern "C" {
     fn memcpy(
         _: *mut std::os::raw::c_void,
         _: *const std::os::raw::c_void,
-        _: u64,
+        _: std::os::raw::c_uint,
     ) -> *mut std::os::raw::c_void;
     fn memset(
         _: *mut std::os::raw::c_void,
         _: std::os::raw::c_int,
-        _: u64,
+        _: std::os::raw::c_uint,
     ) -> *mut std::os::raw::c_void;
 }
-pub type size_t = u64;
+pub type size_t = std::os::raw::c_uint;
 pub type __uint8_t = std::os::raw::c_uchar;
 pub type __int32_t = std::os::raw::c_int;
 pub type __uint32_t = std::os::raw::c_uint;
@@ -88,7 +88,7 @@ unsafe extern "C" fn value_barrier_u32(mut a: uint32_t) -> uint32_t {
 #[inline]
 unsafe extern "C" fn fe_limbs_copy(mut r: *mut fe_limb_t, mut a: *const fe_limb_t) {
     let mut i: size_t = 0 as std::os::raw::c_int as size_t;
-    while i < 10 as std::os::raw::c_int as u64 {
+    while i < 10 as std::os::raw::c_int as std::os::raw::c_uint {
         *r.offset(i as isize) = *a.offset(i as isize);
         i = i.wrapping_add(1);
     }
@@ -99,7 +99,7 @@ unsafe extern "C" fn GFp_memcpy(
     mut src: *const std::os::raw::c_void,
     mut n: size_t,
 ) -> *mut std::os::raw::c_void {
-    if n == 0 as std::os::raw::c_int as u64 {
+    if n == 0 as std::os::raw::c_int as std::os::raw::c_uint {
         return dst;
     }
     return memcpy(dst, src, n);
@@ -110,7 +110,7 @@ unsafe extern "C" fn GFp_memset(
     mut c: std::os::raw::c_int,
     mut n: size_t,
 ) -> *mut std::os::raw::c_void {
-    if n == 0 as std::os::raw::c_int as u64 {
+    if n == 0 as std::os::raw::c_int as std::os::raw::c_uint {
         return dst;
     }
     return memset(dst, c, n);
@@ -16613,21 +16613,21 @@ unsafe extern "C" fn fe_0(mut h: *mut fe) {
     let _ = GFp_memset(
         h as *mut std::os::raw::c_void,
         0 as std::os::raw::c_int,
-        std::mem::size_of::<fe>() as u64,
+        std::mem::size_of::<fe>() as u32,
     );
 }
 unsafe extern "C" fn fe_loose_0(mut h: *mut fe_loose) {
     let _ = GFp_memset(
         h as *mut std::os::raw::c_void,
         0 as std::os::raw::c_int,
-        std::mem::size_of::<fe_loose>() as u64,
+        std::mem::size_of::<fe_loose>() as u32,
     );
 }
 unsafe extern "C" fn fe_1(mut h: *mut fe) {
     let _ = GFp_memset(
         h as *mut std::os::raw::c_void,
         0 as std::os::raw::c_int,
-        std::mem::size_of::<fe>() as u64,
+        std::mem::size_of::<fe>() as u32,
     );
     (*h).v[0 as std::os::raw::c_int as usize] = 1 as std::os::raw::c_int as fe_limb_t;
 }
@@ -16635,7 +16635,7 @@ unsafe extern "C" fn fe_loose_1(mut h: *mut fe_loose) {
     let _ = GFp_memset(
         h as *mut std::os::raw::c_void,
         0 as std::os::raw::c_int,
-        std::mem::size_of::<fe_loose>() as u64,
+        std::mem::size_of::<fe_loose>() as u32,
     );
     (*h).v[0 as std::os::raw::c_int as usize] = 1 as std::os::raw::c_int as fe_limb_t;
 }
@@ -16912,7 +16912,7 @@ unsafe extern "C" fn fe_isnonzero(mut f: *const fe_loose) -> std::os::raw::c_int
     return (GFp_memcmp(
         s.as_mut_ptr(),
         zero.as_ptr(),
-        std::mem::size_of::<[uint8_t; 32]>() as u64,
+        std::mem::size_of::<[uint8_t; 32]>() as u32,
     ) != 0 as std::os::raw::c_int) as std::os::raw::c_int;
 }
 unsafe extern "C" fn fe_isnegative(mut f: *const fe) -> std::os::raw::c_int {

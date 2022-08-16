@@ -8,17 +8,17 @@ extern "C" {
     fn memcpy(
         _: *mut std::os::raw::c_void,
         _: *const std::os::raw::c_void,
-        _: u64,
+        _: std::os::raw::c_uint,
     ) -> *mut std::os::raw::c_void;
 }
-pub type size_t = u64;
+pub type size_t = std::os::raw::c_uint;
 pub type __uint8_t = std::os::raw::c_uchar;
 pub type __uint32_t = std::os::raw::c_uint;
 pub type __uint64_t = u64;
 pub type uint8_t = __uint8_t;
 pub type uint32_t = __uint32_t;
 pub type uint64_t = __uint64_t;
-pub type uintptr_t = u64;
+pub type uintptr_t = std::os::raw::c_uint;
 pub type poly1305_state = [uint8_t; 512];
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -47,7 +47,7 @@ unsafe extern "C" fn GFp_memcpy(
     mut src: *const std::os::raw::c_void,
     mut n: size_t,
 ) -> *mut std::os::raw::c_void {
-    if n == 0 as std::os::raw::c_int as u64 {
+    if n == 0 as std::os::raw::c_int as std::os::raw::c_uint {
         return dst;
     }
     return memcpy(dst, src, n);
@@ -57,7 +57,7 @@ unsafe extern "C" fn U8TO32_LE(mut m: *const uint8_t) -> uint32_t {
     let _ = GFp_memcpy(
         &mut r as *mut uint32_t as *mut std::os::raw::c_void,
         m as *const std::os::raw::c_void,
-        std::mem::size_of::<uint32_t>() as u64,
+        std::mem::size_of::<uint32_t>() as u32,
     );
     return r;
 }
@@ -65,7 +65,7 @@ unsafe extern "C" fn U32TO8_LE(mut m: *mut uint8_t, mut v: uint32_t) {
     let _ = GFp_memcpy(
         m as *mut std::os::raw::c_void,
         &mut v as *mut uint32_t as *const std::os::raw::c_void,
-        std::mem::size_of::<uint32_t>() as u64,
+        std::mem::size_of::<uint32_t>() as u32,
     );
 }
 unsafe extern "C" fn mul32x32_64(mut a: uint32_t, mut b: uint32_t) -> uint64_t {
@@ -75,8 +75,9 @@ unsafe extern "C" fn mul32x32_64(mut a: uint32_t, mut b: uint32_t) -> uint64_t {
 unsafe extern "C" fn poly1305_aligned_state(
     mut state: *mut poly1305_state,
 ) -> *mut poly1305_state_st {
-    return ((state as uintptr_t).wrapping_add(63 as std::os::raw::c_int as u64)
-        & !(63 as std::os::raw::c_int) as u64) as *mut poly1305_state_st;
+    return ((state as uintptr_t).wrapping_add(63 as std::os::raw::c_int as std::os::raw::c_uint)
+        & !(63 as std::os::raw::c_int) as std::os::raw::c_uint)
+        as *mut poly1305_state_st;
 }
 unsafe extern "C" fn poly1305_update(
     mut state: *mut poly1305_state_st,
@@ -93,21 +94,22 @@ unsafe extern "C" fn poly1305_update(
     let mut c: uint64_t = 0;
     let mut j: size_t = 0;
     let mut mp: [uint8_t; 16] = [0; 16];
-    if len < 16 as std::os::raw::c_int as u64 {
-        current_block = 6990334233067194278;
+    if len < 16 as std::os::raw::c_int as std::os::raw::c_uint {
+        current_block = 2923024388715992250;
     } else {
-        current_block = 8255239616661704268;
+        current_block = 16701347803359009348;
     }
     loop {
         match current_block {
-            8255239616661704268 => {
+            16701347803359009348 => {
                 t0 = U8TO32_LE(in_0);
                 t1 = U8TO32_LE(in_0.offset(4 as std::os::raw::c_int as isize));
                 t2 = U8TO32_LE(in_0.offset(8 as std::os::raw::c_int as isize));
                 t3 = U8TO32_LE(in_0.offset(12 as std::os::raw::c_int as isize));
                 in_0 = in_0.offset(16 as std::os::raw::c_int as isize);
-                len =
-                    (len as u64).wrapping_sub(16 as std::os::raw::c_int as u64) as size_t as size_t;
+                len = (len as std::os::raw::c_uint)
+                    .wrapping_sub(16 as std::os::raw::c_int as std::os::raw::c_uint)
+                    as size_t as size_t;
                 let ref mut fresh0 = (*state).h0;
                 *fresh0 = (*fresh0 as std::os::raw::c_uint)
                     .wrapping_add(t0 & 0x3ffffff as std::os::raw::c_int as std::os::raw::c_uint)
@@ -149,7 +151,7 @@ unsafe extern "C" fn poly1305_update(
                 let fresh6 = j;
                 j = j.wrapping_add(1);
                 mp[fresh6 as usize] = 1 as std::os::raw::c_int as uint8_t;
-                while j < 16 as std::os::raw::c_int as u64 {
+                while j < 16 as std::os::raw::c_int as std::os::raw::c_uint {
                     mp[j as usize] = 0 as std::os::raw::c_int as uint8_t;
                     j = j.wrapping_add(1);
                 }
@@ -241,10 +243,10 @@ unsafe extern "C" fn poly1305_update(
         *fresh5 = (*fresh5 as std::os::raw::c_uint)
             .wrapping_add(b.wrapping_mul(5 as std::os::raw::c_int as std::os::raw::c_uint))
             as uint32_t as uint32_t;
-        if len >= 16 as std::os::raw::c_int as u64 {
-            current_block = 8255239616661704268;
+        if len >= 16 as std::os::raw::c_int as std::os::raw::c_uint {
+            current_block = 16701347803359009348;
         } else {
-            current_block = 6990334233067194278;
+            current_block = 2923024388715992250;
         }
     }
 }
@@ -287,7 +289,7 @@ pub unsafe extern "C" fn GFp_poly1305_init(
     let _ = GFp_memcpy(
         ((*state).key).as_mut_ptr() as *mut std::os::raw::c_void,
         key.offset(16 as std::os::raw::c_int as isize) as *const std::os::raw::c_void,
-        std::mem::size_of::<[uint8_t; 16]>() as u64,
+        std::mem::size_of::<[uint8_t; 16]>() as u32,
     );
 }
 #[no_mangle]
@@ -298,7 +300,8 @@ pub unsafe extern "C" fn GFp_poly1305_update(
 ) {
     let mut state: *mut poly1305_state_st = poly1305_aligned_state(statep);
     if (*state).buf_used != 0 {
-        let mut todo: size_t = (16 as std::os::raw::c_int as u64).wrapping_sub((*state).buf_used);
+        let mut todo: size_t =
+            (16 as std::os::raw::c_int as std::os::raw::c_uint).wrapping_sub((*state).buf_used);
         if todo > in_len {
             todo = in_len;
         }
@@ -308,10 +311,10 @@ pub unsafe extern "C" fn GFp_poly1305_update(
             i = i.wrapping_add(1);
         }
         let ref mut fresh12 = (*state).buf_used;
-        *fresh12 = (*fresh12 as u64).wrapping_add(todo) as size_t as size_t;
-        in_len = (in_len as u64).wrapping_sub(todo) as size_t as size_t;
+        *fresh12 = (*fresh12 as std::os::raw::c_uint).wrapping_add(todo) as size_t as size_t;
+        in_len = (in_len as std::os::raw::c_uint).wrapping_sub(todo) as size_t as size_t;
         in_0 = in_0.offset(todo as isize);
-        if (*state).buf_used == 16 as std::os::raw::c_int as u64 {
+        if (*state).buf_used == 16 as std::os::raw::c_int as std::os::raw::c_uint {
             poly1305_update(
                 state,
                 ((*state).buf).as_mut_ptr(),
@@ -320,11 +323,11 @@ pub unsafe extern "C" fn GFp_poly1305_update(
             (*state).buf_used = 0 as std::os::raw::c_int as size_t;
         }
     }
-    if in_len >= 16 as std::os::raw::c_int as u64 {
-        let mut todo_0: size_t = in_len & !(0xf as std::os::raw::c_int) as u64;
+    if in_len >= 16 as std::os::raw::c_int as std::os::raw::c_uint {
+        let mut todo_0: size_t = in_len & !(0xf as std::os::raw::c_int) as std::os::raw::c_uint;
         poly1305_update(state, in_0, todo_0);
         in_0 = in_0.offset(todo_0 as isize);
-        in_len &= 0xf as std::os::raw::c_int as u64;
+        in_len &= 0xf as std::os::raw::c_int as std::os::raw::c_uint;
     }
     if in_len != 0 {
         let mut i_0: size_t = 0 as std::os::raw::c_int as size_t;
