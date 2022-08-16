@@ -113,6 +113,7 @@ const RING_INCLUDES: &[&str] =
       "crypto/fipsmodule/ec/ecp_nistz.h",
       "crypto/fipsmodule/ec/ecp_nistz384.h",
       "crypto/fipsmodule/ec/ecp_nistz256.h",
+      "crypto/fipsmodule/ec/p256_32.h",
       "crypto/internal.h",
       "crypto/limbs/limbs.h",
       "crypto/limbs/limbs.inl",
@@ -261,7 +262,10 @@ fn ring_build_rs_main() {
         ("o", "-o")
     };
 
-    let is_git = std::fs::metadata(".git").is_ok();
+    let is_git = false;
+    // don't build assembly routines from source -- these are fixed and pre-built for this config
+    // in order to avoid having to install perl and nasm on Windows clients.
+    // std::fs::metadata(".git").is_ok();
 
     // Published builds are always release builds.
     let is_debug = is_git && env::var("DEBUG").unwrap() != "false";
@@ -329,6 +333,10 @@ fn build_c_code(target: &Target, pregenerated: PathBuf, out_dir: &Path) {
         if &target.arch == "wasm32" {
             return;
         }
+    }
+    // Xous uses a pure Rust transpiled version of the code base
+    if &target.os == "xous" {
+        return;
     }
 
     let includes_modified = RING_INCLUDES
