@@ -18,6 +18,7 @@
 
 import subprocess
 import os
+import re
 
 RING_C_FILES = [
     "crypto/fipsmodule/aes/aes_nohw.c",
@@ -38,6 +39,7 @@ RING_C_FILES = [
 
 COMMANDS_FILE = "compile_commands.json"
 
+p_sizeof = re.compile(r'(.*)(std::mem::size_of::)(.*)(as u64)(.*)')
 
 def massage_line(line):
     line = line.strip()
@@ -54,8 +56,8 @@ def massage_line(line):
 
     # Convert types
     line = line.replace("std::os::raw::c_int", "i32")
-    line = line.replace("std::os::raw::c_ulong", "u64")
-    line = line.replace("std::os::raw::c_long", "i64")
+    line = line.replace("std::os::raw::c_ulonglong", "u64")
+    line = line.replace("std::os::raw::c_longlong", "i64")
     line = line.replace("std::os::raw::c_uint", "u32")
     line = line.replace("std::os::raw::c_char", "u8")
     line = line.replace("std::os::raw::c_uchar", "u8")
@@ -67,8 +69,10 @@ def massage_line(line):
     line = line.replace("libc::c_uchar", "std::os::raw::c_uchar")
     line = line.replace("libc::c_int", "std::os::raw::c_int")
     line = line.replace("libc::c_uint", "std::os::raw::c_uint")
-    line = line.replace("libc::c_ulong", "u64")
-    line = line.replace("libc::c_long", "i64")
+    line = line.replace("libc::c_ulonglong", "u64")
+    line = line.replace("libc::c_longlong", "i64")
+    line = line.replace("libc::c_ulong", "u32") # this must come after the longlong
+    line = line.replace("libc::c_long", "i32")
     line = line.replace("libc::c_void", "std::os::raw::c_void")
 
     # Fix program-specific oddities
@@ -83,6 +87,8 @@ def massage_line(line):
     line = line.replace("::std::vec::", "std::vec::")
     line = line.replace(": Vec::", ": std::vec::Vec::")
     line = line.replace(") = limbs_mul_add_limb(", ") = GFp_limbs_mul_add_limb(")
+    if p_sizeof.search(line):
+        line = p_sizeof.sub(r'\g<1>\g<2>\g<3>as u32\g<5>', line)
 
     # Replace this ASM weirdness with a barrier
     compiler_fence = (
@@ -117,6 +123,7 @@ def run():
             "-c",
             "-o",
             "build/tmp.o",
+            "-m32",
             "-Iinclude",
             "-UOPENSSL_X86_64",
             "-U__x86_64",
@@ -157,6 +164,8 @@ def run():
                 #print("use core::ffi::*;", file=dest_file)
                 for line in src_file:
                     print(massage_line(line), file=dest_file)
+            subprocess.run(["rm", rs_file])
+            subprocess.run(["rustfmt", "src/c2rust/{}.rs".format(mod_name)])
     print("}")
 
 
