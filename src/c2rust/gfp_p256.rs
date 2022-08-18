@@ -4,11 +4,41 @@
 #![allow(unused_mut)]
 extern crate std;
 
+pub type size_t = std::os::raw::c_uint;
 pub type __uint32_t = std::os::raw::c_uint;
 pub type uint32_t = __uint32_t;
 pub type crypto_word = uint32_t;
 pub type BN_ULONG = crypto_word;
 pub type Limb = crypto_word;
+#[no_mangle]
+pub unsafe extern "C" fn OPENSSL_memcpy(
+    mut dst: *mut std::os::raw::c_void,
+    mut src: *const std::os::raw::c_void,
+    mut n: size_t,
+) -> *mut std::os::raw::c_void {
+    let mut d: *mut std::os::raw::c_uchar = dst as *mut std::os::raw::c_uchar;
+    let mut s: *const std::os::raw::c_uchar = src as *const std::os::raw::c_uchar;
+    let mut i: size_t = 0 as std::os::raw::c_int as size_t;
+    while i < n {
+        *d.offset(i as isize) = *s.offset(i as isize);
+        i = i.wrapping_add(1);
+    }
+    return dst;
+}
+#[no_mangle]
+pub unsafe extern "C" fn OPENSSL_memset(
+    mut dst: *mut std::os::raw::c_void,
+    mut c: std::os::raw::c_int,
+    mut n: size_t,
+) -> *mut std::os::raw::c_void {
+    let mut d: *mut std::os::raw::c_uchar = dst as *mut std::os::raw::c_uchar;
+    let mut i: size_t = 0 as std::os::raw::c_int as size_t;
+    while i < n {
+        *d.offset(i as isize) = c as std::os::raw::c_uchar;
+        i = i.wrapping_add(1);
+    }
+    return dst;
+}
 #[no_mangle]
 pub unsafe extern "C" fn p256_scalar_mul_mont(
     mut r: *mut Limb,
