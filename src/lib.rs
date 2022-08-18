@@ -153,7 +153,7 @@ mod c2rust {
 #[cfg(target_os="xous")]
 mod xous_rand;
 #[cfg(target_os="xous")]
-mod xous_test;
+pub mod xous_test;
 
 #[cfg(target_os="xous")]
 type c_char = i8;
