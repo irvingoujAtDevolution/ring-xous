@@ -28,6 +28,23 @@
 # define OPENSSL_USE_NISTZ256
 #endif
 
+static inline void *OPENSSL_memcpy(void *dst, const void *src, size_t n) {
+  unsigned char *d = dst;
+  const unsigned char *s = src;
+  for (size_t i = 0; i < n; ++i) {
+    d[i] = s[i];
+  }
+  return dst;
+}
+
+static inline void *OPENSSL_memset(void *dst, int c, size_t n) {
+  unsigned char *d = dst;
+  for (size_t i = 0; i < n; ++i) {
+    d[i] = (unsigned char)c;
+  }
+  return dst;
+}
+
 // P-256 field operations.
 //
 // An element mod P in P-256 is represented as a little-endian array of
@@ -48,7 +65,6 @@ typedef struct {
 
 typedef unsigned char P256_SCALAR_BYTES[33];
 
-void *OPENSSL_memcpy(void *dst, const void *src, size_t n);
 static inline void p256_scalar_bytes_from_limbs(
     P256_SCALAR_BYTES bytes_out, const BN_ULONG limbs[P256_LIMBS]) {
   OPENSSL_memcpy(bytes_out, limbs, 32);
