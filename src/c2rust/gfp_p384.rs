@@ -29,20 +29,6 @@ extern "C" {
         __line: std::os::raw::c_uint,
         __function: *const std::os::raw::c_char,
     ) -> !;
-    fn GFp_bn_mul_mont(
-        rp: *mut BN_ULONG,
-        ap: *const BN_ULONG,
-        bp: *const BN_ULONG,
-        np: *const BN_ULONG,
-        n0: *const BN_ULONG,
-        num: size_t,
-    );
-    fn gfp_little_endian_bytes_from_scalar(
-        str: *mut uint8_t,
-        str_len: size_t,
-        scalar: *const Limb,
-        num_limbs: size_t,
-    );
 }
 pub type size_t = std::os::raw::c_uint;
 pub type __uint8_t = std::os::raw::c_uchar;
@@ -86,10 +72,6 @@ unsafe extern "C" fn constant_time_is_zero_w(mut a: crypto_word) -> crypto_word 
 #[inline]
 unsafe extern "C" fn constant_time_is_nonzero_w(mut a: crypto_word) -> crypto_word {
     return !constant_time_is_zero_w(a);
-}
-#[inline]
-unsafe extern "C" fn constant_time_eq_w(mut a: crypto_word, mut b: crypto_word) -> crypto_word {
-    return constant_time_is_zero_w(a ^ b);
 }
 #[inline]
 unsafe extern "C" fn constant_time_select_w(
@@ -397,7 +379,7 @@ unsafe extern "C" fn elem_mul_mont(mut r: *mut Limb, mut a: *const Limb, mut b: 
         0x1 as std::os::raw::c_int as BN_ULONG,
         0x1 as std::os::raw::c_int as BN_ULONG,
     ];
-    GFp_bn_mul_mont(
+    bn_mul_mont(
         r,
         a,
         b,
@@ -426,27 +408,15 @@ unsafe extern "C" fn elem_sqr_mont(mut r: *mut Limb, mut a: *const Limb) {
     elem_mul_mont(r, a, a);
 }
 #[no_mangle]
-pub unsafe extern "C" fn GFp_p384_elem_add(
-    mut r: *mut Limb,
-    mut a: *const Limb,
-    mut b: *const Limb,
-) {
-    elem_add(r, a, b);
-}
-#[no_mangle]
-pub unsafe extern "C" fn GFp_p384_elem_sub(
-    mut r: *mut Limb,
-    mut a: *const Limb,
-    mut b: *const Limb,
-) {
+pub unsafe extern "C" fn p384_elem_sub(mut r: *mut Limb, mut a: *const Limb, mut b: *const Limb) {
     elem_sub(r, a, b);
 }
 #[no_mangle]
-pub unsafe extern "C" fn GFp_p384_elem_div_by_2(mut r: *mut Limb, mut a: *const Limb) {
+pub unsafe extern "C" fn p384_elem_div_by_2(mut r: *mut Limb, mut a: *const Limb) {
     elem_div_by_2(r, a);
 }
 #[no_mangle]
-pub unsafe extern "C" fn GFp_p384_elem_mul_mont(
+pub unsafe extern "C" fn p384_elem_mul_mont(
     mut r: *mut Limb,
     mut a: *const Limb,
     mut b: *const Limb,
@@ -454,7 +424,7 @@ pub unsafe extern "C" fn GFp_p384_elem_mul_mont(
     elem_mul_mont(r, a, b);
 }
 #[no_mangle]
-pub unsafe extern "C" fn GFp_p384_elem_neg(mut r: *mut Limb, mut a: *const Limb) {
+pub unsafe extern "C" fn p384_elem_neg(mut r: *mut Limb, mut a: *const Limb) {
     let mut is_zero_0: Limb = LIMBS_are_zero(
         a,
         (384 as std::os::raw::c_uint).wrapping_div(32 as std::os::raw::c_uint),
@@ -476,7 +446,7 @@ pub unsafe extern "C" fn GFp_p384_elem_neg(mut r: *mut Limb, mut a: *const Limb)
     }
 }
 #[no_mangle]
-pub unsafe extern "C" fn GFp_p384_scalar_mul_mont(
+pub unsafe extern "C" fn p384_scalar_mul_mont(
     mut r: *mut Limb,
     mut a: *const Limb,
     mut b: *const Limb,
@@ -485,75 +455,12 @@ pub unsafe extern "C" fn GFp_p384_scalar_mul_mont(
         0xe88fdc45 as std::os::raw::c_uint,
         0x6ed46089 as std::os::raw::c_int as BN_ULONG,
     ];
-    GFp_bn_mul_mont(
+    bn_mul_mont(
         r,
         a,
         b,
         N.as_ptr(),
         N_N0.as_ptr(),
-        (384 as std::os::raw::c_uint).wrapping_div(32 as std::os::raw::c_uint),
-    );
-}
-unsafe extern "C" fn gfp_p384_point_select_w5(
-    mut out: *mut P384_POINT,
-    mut table: *const P384_POINT,
-    mut index: size_t,
-) {
-    let mut x: Elem = [0; 12];
-    limbs_zero(
-        x.as_mut_ptr(),
-        (384 as std::os::raw::c_uint).wrapping_div(32 as std::os::raw::c_uint),
-    );
-    let mut y: Elem = [0; 12];
-    limbs_zero(
-        y.as_mut_ptr(),
-        (384 as std::os::raw::c_uint).wrapping_div(32 as std::os::raw::c_uint),
-    );
-    let mut z: Elem = [0; 12];
-    limbs_zero(
-        z.as_mut_ptr(),
-        (384 as std::os::raw::c_uint).wrapping_div(32 as std::os::raw::c_uint),
-    );
-    let mut i: size_t = 0 as std::os::raw::c_int as size_t;
-    while i < 16 as std::os::raw::c_int as std::os::raw::c_uint {
-        let mut equal: crypto_word = constant_time_eq_w(
-            index,
-            i.wrapping_add(1 as std::os::raw::c_int as std::os::raw::c_uint),
-        );
-        let mut j: size_t = 0 as std::os::raw::c_int as size_t;
-        while j < (384 as std::os::raw::c_uint).wrapping_div(32 as std::os::raw::c_uint) {
-            x[j as usize] = constant_time_select_w(
-                equal,
-                (*table.offset(i as isize)).X[j as usize],
-                x[j as usize],
-            );
-            y[j as usize] = constant_time_select_w(
-                equal,
-                (*table.offset(i as isize)).Y[j as usize],
-                y[j as usize],
-            );
-            z[j as usize] = constant_time_select_w(
-                equal,
-                (*table.offset(i as isize)).Z[j as usize],
-                z[j as usize],
-            );
-            j = j.wrapping_add(1);
-        }
-        i = i.wrapping_add(1);
-    }
-    limbs_copy(
-        ((*out).X).as_mut_ptr(),
-        x.as_mut_ptr() as *const Limb,
-        (384 as std::os::raw::c_uint).wrapping_div(32 as std::os::raw::c_uint),
-    );
-    limbs_copy(
-        ((*out).Y).as_mut_ptr(),
-        y.as_mut_ptr() as *const Limb,
-        (384 as std::os::raw::c_uint).wrapping_div(32 as std::os::raw::c_uint),
-    );
-    limbs_copy(
-        ((*out).Z).as_mut_ptr(),
-        z.as_mut_ptr() as *const Limb,
         (384 as std::os::raw::c_uint).wrapping_div(32 as std::os::raw::c_uint),
     );
 }
@@ -812,7 +719,7 @@ unsafe extern "C" fn add_precomputed_w5(
     };
     gfp_p384_point_select_w5(&mut h, table, recoded);
     let mut tmp: [BN_ULONG; 12] = [0; 12];
-    GFp_p384_elem_neg(tmp.as_mut_ptr(), (h.Y).as_mut_ptr() as *const Limb);
+    GFp_p384_elem_neg(tmp.as_mut_ptr(), (h.Y).as_mut_ptr());
     copy_conditional(
         (h.Y).as_mut_ptr(),
         tmp.as_mut_ptr() as *const Limb,
@@ -950,7 +857,7 @@ pub unsafe extern "C" fn GFp_nistz384_point_mul(
         wvalue,
         5 as std::os::raw::c_int as crypto_word,
     );
-    gfp_p384_point_select_w5(r, table.as_mut_ptr() as *const P384_POINT, recoded);
+    gfp_p384_point_select_w5(r, table.as_mut_ptr(), recoded);
     while index >= kWindowSize {
         if index != START_INDEX {
             let mut off: size_t = index

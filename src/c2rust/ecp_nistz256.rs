@@ -25,12 +25,6 @@ extern "C" {
     fn GFp_nistz256_select_w7(out: *mut P256_POINT_AFFINE, table: *const Limb, index: crypto_word);
     fn GFp_nistz256_select_w5(out: *mut P256_POINT, table: *const P256_POINT, index: crypto_word);
     fn GFp_nistz256_sqr_mont(res: *mut Limb, a: *const Limb);
-    fn gfp_little_endian_bytes_from_scalar(
-        str: *mut uint8_t,
-        str_len: size_t,
-        scalar: *const Limb,
-        num_limbs: size_t,
-    );
     fn GFp_nistz256_point_add_affine(
         r: *mut P256_POINT,
         a: *const P256_POINT,

@@ -20,7 +20,7 @@ pub type uint32_t = __uint32_t;
 pub type crypto_word = uint32_t;
 pub type Limb = crypto_word;
 #[no_mangle]
-pub unsafe extern "C" fn gfp_little_endian_bytes_from_scalar(
+pub unsafe extern "C" fn little_endian_bytes_from_scalar(
     mut str: *mut uint8_t,
     mut str_len: size_t,
     mut scalar: *const Limb,
@@ -33,18 +33,15 @@ pub unsafe extern "C" fn gfp_little_endian_bytes_from_scalar(
     {
     } else {
         __assert_fail(
-b"str_len == (num_limbs * sizeof(Limb)) + 1\0" as *const u8
-as *const std::os::raw::c_char,
-b"crypto/fipsmodule/ec/ecp_nistz.c\0" as *const u8 as *const std::os::raw::c_char,
-31 as std::os::raw::c_int as std::os::raw::c_uint,
-(*std::mem::transmute::<
-&[u8; 82],
-&[std::os::raw::c_char; 82],
->(
-b"void gfp_little_endian_bytes_from_scalar(uint8_t *, size_t, const Limb *, size_t)\0",
-))
-.as_ptr(),
-);
+            b"str_len == (num_limbs * sizeof(Limb)) + 1\0" as *const u8
+                as *const std::os::raw::c_char,
+            b"crypto/fipsmodule/ec/ecp_nistz.c\0" as *const u8 as *const std::os::raw::c_char,
+            31 as std::os::raw::c_int as std::os::raw::c_uint,
+            (*std::mem::transmute::<&[u8; 78], &[std::os::raw::c_char; 78]>(
+                b"void little_endian_bytes_from_scalar(uint8_t *, size_t, const Limb *, size_t)\0",
+            ))
+            .as_ptr(),
+        );
     }
     let mut i: size_t = 0;
     i = 0 as std::os::raw::c_int as size_t;
