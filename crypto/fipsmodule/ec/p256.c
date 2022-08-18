@@ -384,7 +384,7 @@ void p256_point_mul(P256_POINT *r, const Limb scalar[P256_LIMBS],
 
       // select the point to add or subtract, in constant time.
       fiat_p256_select_point(digit, 17,
-        RING_CORE_POINTLESS_ARRAY_CONST_CAST((const fiat_p256_felem(*)[3]))p_pre_comp,
+        (const fiat_p256_felem(*)[3])p_pre_comp,
         tmp);
       fiat_p256_opp(ftmp, tmp[1]);  // (X, -Y, Z) is the negative point.
       fiat_p256_cmovznz(tmp[1], sign, tmp[1], ftmp);
