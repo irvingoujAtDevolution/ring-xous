@@ -81,6 +81,9 @@ extern crate alloc;
 mod debug;
 
 #[macro_use]
+mod prefixed;
+
+#[macro_use]
 pub mod test;
 
 #[macro_use]

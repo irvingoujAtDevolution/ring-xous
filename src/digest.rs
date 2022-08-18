@@ -305,6 +305,29 @@ impl Eq for Algorithm {}
 
 derive_debug_via_id!(Algorithm);
 
+impl Algorithm {
+    /// The internal block length.
+    pub fn block_len(&self) -> usize {
+        self.block_len
+    }
+
+    /// The size of the chaining value of the digest function, in bytes.
+    ///
+    /// For non-truncated algorithms (SHA-1, SHA-256, SHA-512), this is equal
+    /// to [`Self::output_len()`]. For truncated algorithms (e.g. SHA-384,
+    /// SHA-512/256), this is equal to the length before truncation. This is
+    /// mostly helpful for determining the size of an HMAC key that is
+    /// appropriate for the digest algorithm.
+    pub fn chaining_len(&self) -> usize {
+        self.chaining_len
+    }
+
+    /// The length of a finalized digest.
+    pub fn output_len(&self) -> usize {
+        self.output_len
+    }
+}
+
 /// SHA-1 as specified in [FIPS 180-4]. Deprecated.
 ///
 /// [FIPS 180-4]: http://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.180-4.pdf

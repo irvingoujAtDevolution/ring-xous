@@ -34,6 +34,7 @@ RING_C_FILES = [
     "crypto/fipsmodule/ec/ecp_nistz256.c",
     "crypto/fipsmodule/ec/gfp_p256.c",
     "crypto/fipsmodule/ec/gfp_p384.c",
+    "crypto/fipsmodule/ec/p256.c",
 ]
 
 
