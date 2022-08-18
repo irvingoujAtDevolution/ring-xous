@@ -131,6 +131,7 @@ def run():
             "-D__xous__",
             "-D__riscv",
             "-D__riscv_xlen=32",
+            "-DOPENSSL_USE_NISTZ256",
             "{file}"
         ],
         "directory": "{cwd}",
