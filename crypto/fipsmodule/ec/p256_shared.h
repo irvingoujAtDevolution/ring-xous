@@ -48,6 +48,7 @@ typedef struct {
 
 typedef unsigned char P256_SCALAR_BYTES[33];
 
+void *OPENSSL_memcpy(void *dst, const void *src, size_t n);
 static inline void p256_scalar_bytes_from_limbs(
     P256_SCALAR_BYTES bytes_out, const BN_ULONG limbs[P256_LIMBS]) {
   OPENSSL_memcpy(bytes_out, limbs, 32);
