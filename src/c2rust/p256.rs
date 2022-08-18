@@ -83,7 +83,11 @@ unsafe extern "C" fn p256_scalar_bytes_from_limbs(
     mut bytes_out: *mut std::os::raw::c_uchar,
     mut limbs: *const BN_ULONG,
 ) {
-    OPENSSL_memcpy(bytes_out, limbs, 32 as std::os::raw::c_int);
+    OPENSSL_memcpy(
+        bytes_out as *mut std::os::raw::c_void,
+        limbs as *const std::os::raw::c_void,
+        32 as std::os::raw::c_int as size_t,
+    );
     *bytes_out.offset(32 as std::os::raw::c_int as isize) =
         0 as std::os::raw::c_int as std::os::raw::c_uchar;
 }
@@ -105,6 +109,35 @@ unsafe extern "C" fn recode_scalar_bits(
         .wrapping_add(d & 1 as std::os::raw::c_int as std::os::raw::c_uint);
     *sign = s & 1 as std::os::raw::c_int as std::os::raw::c_uint;
     *digit = d;
+}
+#[no_mangle]
+pub unsafe extern "C" fn OPENSSL_memcpy(
+    mut dst: *mut std::os::raw::c_void,
+    mut src: *const std::os::raw::c_void,
+    mut n: size_t,
+) -> *mut std::os::raw::c_void {
+    let mut d: *mut std::os::raw::c_uchar = dst as *mut std::os::raw::c_uchar;
+    let mut s: *const std::os::raw::c_uchar = src as *const std::os::raw::c_uchar;
+    let mut i: size_t = 0 as std::os::raw::c_int as size_t;
+    while i < n {
+        *d.offset(i as isize) = *s.offset(i as isize);
+        i = i.wrapping_add(1);
+    }
+    return dst;
+}
+#[no_mangle]
+pub unsafe extern "C" fn OPENSSL_memset(
+    mut dst: *mut std::os::raw::c_void,
+    mut c: std::os::raw::c_int,
+    mut n: size_t,
+) -> *mut std::os::raw::c_void {
+    let mut d: *mut std::os::raw::c_uchar = dst as *mut std::os::raw::c_uchar;
+    let mut i: size_t = 0 as std::os::raw::c_int as size_t;
+    while i < n {
+        *d.offset(i as isize) = c as std::os::raw::c_uchar;
+        i = i.wrapping_add(1);
+    }
+    return dst;
 }
 unsafe extern "C" fn fiat_p256_addcarryx_u32(
     mut out1: *mut uint32_t,
@@ -5324,7 +5357,7 @@ unsafe extern "C" fn fiat_p256_select_point_affine(
     mut out: *mut fiat_p256_felem,
 ) {
     OPENSSL_memset(
-        out,
+        out as *mut std::os::raw::c_void,
         0 as std::os::raw::c_int,
         (std::mem::size_of::<fiat_p256_felem>() as u32)
             .wrapping_mul(3 as std::os::raw::c_int as std::os::raw::c_uint),
@@ -5363,7 +5396,7 @@ unsafe extern "C" fn fiat_p256_select_point(
     mut out: *mut fiat_p256_felem,
 ) {
     OPENSSL_memset(
-        out,
+        out as *mut std::os::raw::c_void,
         0 as std::os::raw::c_int,
         (std::mem::size_of::<fiat_p256_felem>() as u32)
             .wrapping_mul(3 as std::os::raw::c_int as std::os::raw::c_uint),
@@ -5418,7 +5451,7 @@ pub unsafe extern "C" fn p256_point_mul(
         __assert_fail(
             b"r != ((void*)0)\0" as *const u8 as *const std::os::raw::c_char,
             b"crypto/fipsmodule/ec/p256.c\0" as *const u8 as *const std::os::raw::c_char,
-            334 as std::os::raw::c_int as std::os::raw::c_uint,
+            352 as std::os::raw::c_int as std::os::raw::c_uint,
             (*std::mem::transmute::<&[u8; 76], &[std::os::raw::c_char; 76]>(
                 b"void p256_point_mul(P256_POINT *, const Limb *, const Limb *, const Limb *)\0",
             ))
@@ -5430,7 +5463,7 @@ pub unsafe extern "C" fn p256_point_mul(
         __assert_fail(
             b"scalar != ((void*)0)\0" as *const u8 as *const std::os::raw::c_char,
             b"crypto/fipsmodule/ec/p256.c\0" as *const u8 as *const std::os::raw::c_char,
-            335 as std::os::raw::c_int as std::os::raw::c_uint,
+            353 as std::os::raw::c_int as std::os::raw::c_uint,
             (*std::mem::transmute::<&[u8; 76], &[std::os::raw::c_char; 76]>(
                 b"void p256_point_mul(P256_POINT *, const Limb *, const Limb *, const Limb *)\0",
             ))
@@ -5442,7 +5475,7 @@ pub unsafe extern "C" fn p256_point_mul(
         __assert_fail(
             b"p_x != ((void*)0)\0" as *const u8 as *const std::os::raw::c_char,
             b"crypto/fipsmodule/ec/p256.c\0" as *const u8 as *const std::os::raw::c_char,
-            336 as std::os::raw::c_int as std::os::raw::c_uint,
+            354 as std::os::raw::c_int as std::os::raw::c_uint,
             (*std::mem::transmute::<&[u8; 76], &[std::os::raw::c_char; 76]>(
                 b"void p256_point_mul(P256_POINT *, const Limb *, const Limb *, const Limb *)\0",
             ))
@@ -5454,7 +5487,7 @@ pub unsafe extern "C" fn p256_point_mul(
         __assert_fail(
             b"p_y != ((void*)0)\0" as *const u8 as *const std::os::raw::c_char,
             b"crypto/fipsmodule/ec/p256.c\0" as *const u8 as *const std::os::raw::c_char,
-            337 as std::os::raw::c_int as std::os::raw::c_uint,
+            355 as std::os::raw::c_int as std::os::raw::c_uint,
             (*std::mem::transmute::<&[u8; 76], &[std::os::raw::c_char; 76]>(
                 b"void p256_point_mul(P256_POINT *, const Limb *, const Limb *, const Limb *)\0",
             ))
@@ -5465,7 +5498,7 @@ pub unsafe extern "C" fn p256_point_mul(
     p256_scalar_bytes_from_limbs(scalar_bytes.as_mut_ptr(), scalar);
     let mut p_pre_comp: [[fiat_p256_felem; 3]; 17] = [[[0; 8]; 3]; 17];
     OPENSSL_memset(
-        &mut p_pre_comp,
+        &mut p_pre_comp as *mut [[fiat_p256_felem; 3]; 17] as *mut std::os::raw::c_void,
         0 as std::os::raw::c_int,
         std::mem::size_of::<[[fiat_p256_felem; 3]; 17]>() as u32,
     );
