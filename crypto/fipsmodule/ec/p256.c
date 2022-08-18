@@ -26,7 +26,7 @@
 #include "../../internal.h"
 #include "./util.h"
 
-static inline void *OPENSSL_memcpy(void *dst, const void *src, size_t n) {
+void *OPENSSL_memcpy(void *dst, const void *src, size_t n) {
   unsigned char *d = dst;
   const unsigned char *s = src;
   for (size_t i = 0; i < n; ++i) {
@@ -35,7 +35,7 @@ static inline void *OPENSSL_memcpy(void *dst, const void *src, size_t n) {
   return dst;
 }
 
-static inline void *OPENSSL_memset(void *dst, int c, size_t n) {
+void *OPENSSL_memset(void *dst, int c, size_t n) {
   unsigned char *d = dst;
   for (size_t i = 0; i < n; ++i) {
     d[i] = (unsigned char)c;

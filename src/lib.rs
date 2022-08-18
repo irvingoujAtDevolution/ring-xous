@@ -154,6 +154,8 @@ mod c2rust {
     mod gfp_p384;
     mod p256;
 }
+mod p256;
+
 #[cfg(target_os="xous")]
 mod xous_rand;
 #[cfg(target_os="xous")]
