@@ -12,20 +12,17 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
-#ifndef OPENSSL_HEADER_EC_ECP_NISTZ_H
-#define OPENSSL_HEADER_EC_ECP_NISTZ_H
-
 #include <ring-core/base.h>
 
-#include "../../limbs/limbs.h"
+#include "../../internal.h"
 
 #if defined(__GNUC__)
-#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wconversion"
 #pragma GCC diagnostic ignored "-Wsign-conversion"
 #endif
 
-// This function looks at `w + 1` scalar bits (`w` current, 1 adjacent less
+
+// This function looks at 5+1 scalar bits (5 current, 1 adjacent less
 // significant bit), and recodes them into a signed digit for use in fast point
 // multiplication: the use of signed rather than unsigned digits means that
 // fewer points need to be precomputed, given that point inversion is easy (a
@@ -77,22 +74,22 @@
 // as in wNAFs won't do, we need their fixed-window equivalent -- which is a few
 // decades older: we'll be using the so-called "modified Booth encoding" due to
 // MacSorley ("High-speed arithmetic in binary computers", Proc. IRE, vol. 49
-// (1961), pp. 67-91), in a radix-2**w setting.  That is, we always combine `w`
-// signed bits into a signed digit, e.g. (for `w == 5`):
+// (1961), pp. 67-91), in a radix-2^5 setting.  That is, we always combine five
+// signed bits into a signed digit:
 //
 //       s_(5j + 4) s_(5j + 3) s_(5j + 2) s_(5j + 1) s_(5j)
 //
 // The sign-alternating property implies that the resulting digit values are
-// integers from `-2**(w-1)` to `2**(w-1)`, e.g. -16 to 16 for `w == 5`.
+// integers from -16 to 16.
 //
 // Of course, we don't actually need to compute the signed digits s_i as an
 // intermediate step (that's just a nice way to see how this scheme relates
 // to the wNAF): a direct computation obtains the recoded digit from the
 // six bits b_(5j + 4) ... b_(5j - 1).
 //
-// This function takes those `w` bits as an integer (e.g. 0 .. 63), writing the
+// This function takes those six bits as an integer (0 .. 63), writing the
 // recoded digit to *sign (0 for positive, 1 for negative) and *digit (absolute
-// value, in the range 0 .. 2**(w-1).  Note that this integer essentially provides
+// value, in the range 0 .. 16).  Note that this integer essentially provides
 // the input bits "shifted to the left" by one position: for example, the input
 // to compute the least significant recoded digit, given that there's no bit
 // b_-1, has to be b_4 b_3 b_2 b_1 b_0 0.
@@ -246,29 +243,16 @@
 //   P-384: ...01110011; w = 2, 5, 6, 7 are okay
 //   P-256: ...01010001; w = 5, 7 are okay
 //   P-224: ...00111101; w = 3, 4, 5, 6 are okay
-static inline void booth_recode(crypto_word *is_negative, crypto_word *digit,
-                                crypto_word in, crypto_word w) {
-  debug_assert_nonsecret(w >= 2);
-  debug_assert_nonsecret(w <= 7);
+static inline void recode_scalar_bits(crypto_word *sign, crypto_word *digit,
+                                      crypto_word in) {
+  crypto_word s, d;
 
-  // Set all bits of `s` to MSB(in), similar to |constant_time_msb_s|,
-  // but 'in' seen as (`w+1`)-bit value.
-  crypto_word s = ~((in >> w) - 1);
-  crypto_word d;
-  d = ((crypto_word)1u << (w + 1)) - in - 1;
+  s = ~((in >> 5) - 1); /* sets all bits to MSB(in), 'in' seen as
+                          * 6-bit value */
+  d = (1 << 6) - in - 1;
   d = (d & s) | (in & ~s);
   d = (d >> 1) + (d & 1);
 
-  *is_negative = constant_time_is_nonzero_w(s & 1);
+  *sign = s & 1;
   *digit = d;
 }
-
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
-
-void little_endian_bytes_from_scalar(uint8_t str[], size_t str_len,
-                                     const Limb scalar[],
-                                     size_t num_limbs);
-
-#endif // OPENSSL_HEADER_EC_ECP_NISTZ_H
