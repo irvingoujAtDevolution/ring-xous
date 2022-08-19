@@ -188,6 +188,7 @@ void GFp_nistz256_point_add(P256_POINT *r, const P256_POINT *a, const P256_POINT
 #endif
 
 /* r = p * p_scalar */
+#if 0
 void GFp_nistz256_point_mul(P256_POINT *r, const Limb p_scalar[P256_LIMBS],
                             const Limb p_x[P256_LIMBS],
                             const Limb p_y[P256_LIMBS]) {
@@ -277,7 +278,7 @@ void GFp_nistz256_point_mul(P256_POINT *r, const Limb p_scalar[P256_LIMBS],
   copy_conditional(h.Y, tmp, recoded_is_negative);
   GFp_nistz256_point_add(r, r, &h);
 }
-
+#endif
 #if defined(GFp_USE_LARGE_TABLE)
 
 /* Precomputed tables for the default generator */
