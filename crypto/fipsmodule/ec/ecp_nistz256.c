@@ -307,7 +307,7 @@ static Limb is_infinity(const Limb x[P256_LIMBS],
   }
   return constant_time_is_zero_w(acc);
 }
-
+#if 0
 void GFp_nistz256_point_mul_base(P256_POINT *r,
                                  const Limb g_scalar[P256_LIMBS]) {
   static const crypto_word kMask = (1 << (7 /* kWindowSize */ + 1)) - 1;
@@ -344,7 +344,7 @@ void GFp_nistz256_point_mul_base(P256_POINT *r,
   limbs_copy(r->Y, p.Y, P256_LIMBS);
   limbs_copy(r->Z, p.Z, P256_LIMBS);
 }
-
+#endif
 #endif
 
 #if defined(__xous__)
