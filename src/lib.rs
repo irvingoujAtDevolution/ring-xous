@@ -143,7 +143,7 @@ mod c2rust {
     mod aes_nohw;
     pub mod montgomery;
     mod montgomery_inv;
-    mod limbs;
+    pub mod limbs;
     mod mem;
     mod poly1305;
     mod crypto;

@@ -1272,6 +1272,7 @@ fn limbs_from_mont_in_place(r: &mut [Limb], tmp: &mut [Limb], m: &[Limb], n0: &N
     target_arch = "x86"
 )))]
 fn limbs_mul(r: &mut [Limb], a: &[Limb], b: &[Limb]) {
+    use crate::c2rust::limbs::limbs_mul_add_limb;
     debug_assert_eq!(r.len(), 2 * a.len());
     debug_assert_eq!(a.len(), b.len());
     let ab_len = a.len();
@@ -1283,7 +1284,7 @@ fn limbs_mul(r: &mut [Limb], a: &[Limb], b: &[Limb]) {
                 (&mut r[i..][..ab_len]).as_mut_ptr(),
                 a.as_ptr(),
                 b_limb,
-                ab_len,
+                ab_len as u32,
             )
         };
     }
