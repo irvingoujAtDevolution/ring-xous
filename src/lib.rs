@@ -138,7 +138,7 @@ mod sealed {
     pub trait Sealed {}
 }
 
-//#[cfg(target_os="xous")]
+#[cfg(not(linux))]
 mod c2rust {
     mod aes_nohw;
     pub mod montgomery;
