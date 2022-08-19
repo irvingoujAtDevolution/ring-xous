@@ -29,6 +29,20 @@ extern "C" {
         __line: std::os::raw::c_uint,
         __function: *const std::os::raw::c_char,
     ) -> !;
+    fn bn_mul_mont(
+        rp: *mut BN_ULONG,
+        ap: *const BN_ULONG,
+        bp: *const BN_ULONG,
+        np: *const BN_ULONG,
+        n0: *const BN_ULONG,
+        num: size_t,
+    );
+    fn little_endian_bytes_from_scalar(
+        str: *mut uint8_t,
+        str_len: size_t,
+        scalar: *const Limb,
+        num_limbs: size_t,
+    );
 }
 pub type size_t = std::os::raw::c_uint;
 pub type __uint8_t = std::os::raw::c_uchar;
@@ -72,6 +86,10 @@ unsafe extern "C" fn constant_time_is_zero_w(mut a: crypto_word) -> crypto_word 
 #[inline]
 unsafe extern "C" fn constant_time_is_nonzero_w(mut a: crypto_word) -> crypto_word {
     return !constant_time_is_zero_w(a);
+}
+#[inline]
+unsafe extern "C" fn constant_time_eq_w(mut a: crypto_word, mut b: crypto_word) -> crypto_word {
+    return constant_time_is_zero_w(a ^ b);
 }
 #[inline]
 unsafe extern "C" fn constant_time_select_w(
@@ -464,6 +482,69 @@ pub unsafe extern "C" fn p384_scalar_mul_mont(
         (384 as std::os::raw::c_uint).wrapping_div(32 as std::os::raw::c_uint),
     );
 }
+unsafe extern "C" fn p384_point_select_w5(
+    mut out: *mut P384_POINT,
+    mut table: *const P384_POINT,
+    mut index: size_t,
+) {
+    let mut x: Elem = [0; 12];
+    limbs_zero(
+        x.as_mut_ptr(),
+        (384 as std::os::raw::c_uint).wrapping_div(32 as std::os::raw::c_uint),
+    );
+    let mut y: Elem = [0; 12];
+    limbs_zero(
+        y.as_mut_ptr(),
+        (384 as std::os::raw::c_uint).wrapping_div(32 as std::os::raw::c_uint),
+    );
+    let mut z: Elem = [0; 12];
+    limbs_zero(
+        z.as_mut_ptr(),
+        (384 as std::os::raw::c_uint).wrapping_div(32 as std::os::raw::c_uint),
+    );
+    let mut i: size_t = 0 as std::os::raw::c_int as size_t;
+    while i < 16 as std::os::raw::c_int as std::os::raw::c_uint {
+        let mut equal: crypto_word = constant_time_eq_w(
+            index,
+            i.wrapping_add(1 as std::os::raw::c_int as std::os::raw::c_uint),
+        );
+        let mut j: size_t = 0 as std::os::raw::c_int as size_t;
+        while j < (384 as std::os::raw::c_uint).wrapping_div(32 as std::os::raw::c_uint) {
+            x[j as usize] = constant_time_select_w(
+                equal,
+                (*table.offset(i as isize)).X[j as usize],
+                x[j as usize],
+            );
+            y[j as usize] = constant_time_select_w(
+                equal,
+                (*table.offset(i as isize)).Y[j as usize],
+                y[j as usize],
+            );
+            z[j as usize] = constant_time_select_w(
+                equal,
+                (*table.offset(i as isize)).Z[j as usize],
+                z[j as usize],
+            );
+            j = j.wrapping_add(1);
+        }
+        i = i.wrapping_add(1);
+    }
+    limbs_copy(
+        ((*out).X).as_mut_ptr(),
+        x.as_mut_ptr() as *const Limb,
+        (384 as std::os::raw::c_uint).wrapping_div(32 as std::os::raw::c_uint),
+    );
+    limbs_copy(
+        ((*out).Y).as_mut_ptr(),
+        y.as_mut_ptr() as *const Limb,
+        (384 as std::os::raw::c_uint).wrapping_div(32 as std::os::raw::c_uint),
+    );
+    limbs_copy(
+        ((*out).Z).as_mut_ptr(),
+        z.as_mut_ptr() as *const Limb,
+        (384 as std::os::raw::c_uint).wrapping_div(32 as std::os::raw::c_uint),
+    );
+}
 #[inline]
 unsafe extern "C" fn booth_recode(
     mut is_negative: *mut crypto_word,
@@ -509,10 +590,7 @@ unsafe extern "C" fn booth_recode(
     *digit = d;
 }
 #[no_mangle]
-pub unsafe extern "C" fn GFp_nistz384_point_double(
-    mut r: *mut P384_POINT,
-    mut a: *const P384_POINT,
-) {
+pub unsafe extern "C" fn nistz384_point_double(mut r: *mut P384_POINT, mut a: *const P384_POINT) {
     let mut S: [BN_ULONG; 12] = [0; 12];
     let mut M: [BN_ULONG; 12] = [0; 12];
     let mut Zsqr: [BN_ULONG; 12] = [0; 12];
@@ -559,7 +637,7 @@ pub unsafe extern "C" fn GFp_nistz384_point_double(
     elem_sub(res_y, S.as_mut_ptr() as *const Limb, res_y as *const Limb);
 }
 #[no_mangle]
-pub unsafe extern "C" fn GFp_nistz384_point_add(
+pub unsafe extern "C" fn nistz384_point_add(
     mut r: *mut P384_POINT,
     mut a: *const P384_POINT,
     mut b: *const P384_POINT,
@@ -615,7 +693,7 @@ pub unsafe extern "C" fn GFp_nistz384_point_add(
             S2.as_mut_ptr() as *const Limb,
         ) != 0
         {
-            GFp_nistz384_point_double(r, a);
+            nistz384_point_double(r, a);
         } else {
             limbs_zero(
                 ((*r).X).as_mut_ptr(),
@@ -717,18 +795,18 @@ unsafe extern "C" fn add_precomputed_w5(
         Y: [0; 12],
         Z: [0; 12],
     };
-    gfp_p384_point_select_w5(&mut h, table, recoded);
+    p384_point_select_w5(&mut h, table, recoded);
     let mut tmp: [BN_ULONG; 12] = [0; 12];
-    GFp_p384_elem_neg(tmp.as_mut_ptr(), (h.Y).as_mut_ptr());
+    p384_elem_neg(tmp.as_mut_ptr(), (h.Y).as_mut_ptr() as *const Limb);
     copy_conditional(
         (h.Y).as_mut_ptr(),
         tmp.as_mut_ptr() as *const Limb,
         recoded_is_negative,
     );
-    GFp_nistz384_point_add(r, r, &mut h);
+    nistz384_point_add(r, r, &mut h);
 }
 #[no_mangle]
-pub unsafe extern "C" fn GFp_nistz384_point_mul(
+pub unsafe extern "C" fn nistz384_point_mul(
     mut r: *mut P384_POINT,
     mut p_scalar: *const BN_ULONG,
     mut p_x: *const BN_ULONG,
@@ -739,7 +817,7 @@ pub unsafe extern "C" fn GFp_nistz384_point_mul(
         << 5 as std::os::raw::c_int + 1 as std::os::raw::c_int)
         - 1 as std::os::raw::c_int) as crypto_word;
     let mut p_str: [uint8_t; 49] = [0; 49];
-    gfp_little_endian_bytes_from_scalar(
+    little_endian_bytes_from_scalar(
         p_str.as_mut_ptr(),
         (std::mem::size_of::<[uint8_t; 49]>() as u32)
             .wrapping_div(std::mem::size_of::<uint8_t>() as u32),
@@ -770,70 +848,70 @@ pub unsafe extern "C" fn GFp_nistz384_point_mul(
         ONE.as_ptr(),
         (384 as std::os::raw::c_uint).wrapping_div(32 as std::os::raw::c_uint),
     );
-    GFp_nistz384_point_double(
+    nistz384_point_double(
         &mut *row.offset((2 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
         &mut *row.offset((1 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
     );
-    GFp_nistz384_point_add(
+    nistz384_point_add(
         &mut *row.offset((3 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
         &mut *row.offset((2 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
         &mut *row.offset((1 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
     );
-    GFp_nistz384_point_double(
+    nistz384_point_double(
         &mut *row.offset((4 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
         &mut *row.offset((2 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
     );
-    GFp_nistz384_point_double(
+    nistz384_point_double(
         &mut *row.offset((6 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
         &mut *row.offset((3 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
     );
-    GFp_nistz384_point_double(
+    nistz384_point_double(
         &mut *row.offset((8 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
         &mut *row.offset((4 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
     );
-    GFp_nistz384_point_double(
+    nistz384_point_double(
         &mut *row.offset((12 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
         &mut *row.offset((6 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
     );
-    GFp_nistz384_point_add(
+    nistz384_point_add(
         &mut *row.offset((5 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
         &mut *row.offset((4 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
         &mut *row.offset((1 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
     );
-    GFp_nistz384_point_add(
+    nistz384_point_add(
         &mut *row.offset((7 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
         &mut *row.offset((6 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
         &mut *row.offset((1 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
     );
-    GFp_nistz384_point_add(
+    nistz384_point_add(
         &mut *row.offset((9 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
         &mut *row.offset((8 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
         &mut *row.offset((1 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
     );
-    GFp_nistz384_point_add(
+    nistz384_point_add(
         &mut *row.offset((13 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
         &mut *row.offset((12 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
         &mut *row.offset((1 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
     );
-    GFp_nistz384_point_double(
+    nistz384_point_double(
         &mut *row.offset((14 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
         &mut *row.offset((7 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
     );
-    GFp_nistz384_point_double(
+    nistz384_point_double(
         &mut *row.offset((10 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
         &mut *row.offset((5 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
     );
-    GFp_nistz384_point_add(
+    nistz384_point_add(
         &mut *row.offset((15 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
         &mut *row.offset((14 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
         &mut *row.offset((1 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
     );
-    GFp_nistz384_point_add(
+    nistz384_point_add(
         &mut *row.offset((11 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
         &mut *row.offset((10 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
         &mut *row.offset((1 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
     );
-    GFp_nistz384_point_double(
+    nistz384_point_double(
         &mut *row.offset((16 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
         &mut *row.offset((8 as std::os::raw::c_int - 1 as std::os::raw::c_int) as isize),
     );
@@ -857,7 +935,7 @@ pub unsafe extern "C" fn GFp_nistz384_point_mul(
         wvalue,
         5 as std::os::raw::c_int as crypto_word,
     );
-    gfp_p384_point_select_w5(r, table.as_mut_ptr(), recoded);
+    p384_point_select_w5(r, table.as_mut_ptr() as *const P384_POINT, recoded);
     while index >= kWindowSize {
         if index != START_INDEX {
             let mut off: size_t = index
@@ -876,11 +954,11 @@ pub unsafe extern "C" fn GFp_nistz384_point_mul(
             add_precomputed_w5(r, wvalue, table.as_mut_ptr() as *const P384_POINT);
         }
         index = (index as std::os::raw::c_uint).wrapping_sub(kWindowSize) as size_t as size_t;
-        GFp_nistz384_point_double(r, r);
-        GFp_nistz384_point_double(r, r);
-        GFp_nistz384_point_double(r, r);
-        GFp_nistz384_point_double(r, r);
-        GFp_nistz384_point_double(r, r);
+        nistz384_point_double(r, r);
+        nistz384_point_double(r, r);
+        nistz384_point_double(r, r);
+        nistz384_point_double(r, r);
+        nistz384_point_double(r, r);
     }
     wvalue = p_str[0 as std::os::raw::c_int as usize] as crypto_word;
     wvalue = wvalue << 1 as std::os::raw::c_int & kMask;

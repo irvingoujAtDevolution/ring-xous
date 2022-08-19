@@ -118,7 +118,7 @@ OPENSSL_STATIC_ASSERT(
   sizeof(BN_ULONG) * BN_MONT_CTX_N0_LIMBS == sizeof(uint64_t),
   "uint64_t is insufficient precision for n0");
 
-int GFp_bn_from_montgomery_in_place(BN_ULONG r[], size_t num_r, BN_ULONG a[],
+int bn_from_montgomery_in_place(BN_ULONG r[], size_t num_r, BN_ULONG a[],
                                     size_t num_a, const BN_ULONG n[],
                                     size_t num_n,
                                     const BN_ULONG n0_[BN_MONT_CTX_N0_LIMBS]) {
@@ -132,7 +132,7 @@ int GFp_bn_from_montgomery_in_place(BN_ULONG r[], size_t num_r, BN_ULONG a[],
   BN_ULONG n0 = n0_[0];
   BN_ULONG carry = 0;
   for (size_t i = 0; i < num_n; i++) {
-    BN_ULONG v = GFp_limbs_mul_add_limb(a + i, n, a[i] * n0, num_n);
+    BN_ULONG v = limbs_mul_add_limb(a + i, n, a[i] * n0, num_n);
     v += carry + a[i + num_n];
     carry |= (v != a[i + num_n]);
     carry &= (v <= a[i + num_n]);
@@ -159,14 +159,14 @@ int GFp_bn_from_montgomery_in_place(BN_ULONG r[], size_t num_r, BN_ULONG a[],
 
 #if !defined(OPENSSL_X86) && !defined(OPENSSL_X86_64) && \
     !defined(OPENSSL_ARM) && !defined(OPENSSL_AARCH64) || defined(__xous__)
-void GFp_bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
+void bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
                  const BN_ULONG *np, const BN_ULONG *n0, size_t num) {
   Limb tmp[2 * num];
   for (size_t i = 0; i < num; i++)
     tmp[i] = 0;
   for (size_t i = 0; i < num; i++)
-    tmp[num + i] = GFp_limbs_mul_add_limb(tmp + i, ap, bp[i], num);
+    tmp[num + i] = limbs_mul_add_limb(tmp + i, ap, bp[i], num);
 
-  GFp_bn_from_montgomery_in_place(rp, num, tmp, 2 * num, np, num, n0);
+  bn_from_montgomery_in_place(rp, num, tmp, 2 * num, np, num, n0);
 }
 #endif

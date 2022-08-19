@@ -31,7 +31,7 @@ RING_C_FILES = [
     "crypto/crypto.c",
     "crypto/curve25519/curve25519.c",
     "crypto/fipsmodule/ec/ecp_nistz.c",
-    "crypto/fipsmodule/ec/ecp_nistz256.c",
+    # "crypto/fipsmodule/ec/ecp_nistz256.c",
     "crypto/fipsmodule/ec/gfp_p256.c",
     "crypto/fipsmodule/ec/gfp_p384.c",
     "crypto/fipsmodule/ec/p256.c",
@@ -87,7 +87,7 @@ def massage_line(line):
     line = line.replace("::std::mem::size_of", "std::mem::size_of")
     line = line.replace("::std::vec::", "std::vec::")
     line = line.replace(": Vec::", ": std::vec::Vec::")
-    line = line.replace(") = limbs_mul_add_limb(", ") = GFp_limbs_mul_add_limb(")
+    # line = line.replace(") = limbs_mul_add_limb(", ") = GFp_limbs_mul_add_limb(")
     if p_sizeof.search(line):
         line = p_sizeof.sub(r'\g<1>\g<2>\g<3>as u32\g<5>', line)
 

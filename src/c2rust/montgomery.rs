@@ -12,7 +12,7 @@ extern "C" {
         __line: std::os::raw::c_uint,
         __function: *const std::os::raw::c_char,
     ) -> !;
-    fn GFp_limbs_mul_add_limb(r: *mut Limb, a: *const Limb, b: Limb, num_limbs: size_t) -> Limb;
+    fn limbs_mul_add_limb(r: *mut Limb, a: *const Limb, b: Limb, num_limbs: size_t) -> Limb;
 }
 pub type size_t = std::os::raw::c_uint;
 pub type __uint32_t = std::os::raw::c_uint;
@@ -98,7 +98,7 @@ unsafe extern "C" fn limbs_sub(
     return borrow;
 }
 #[no_mangle]
-pub unsafe extern "C" fn GFp_bn_from_montgomery_in_place(
+pub unsafe extern "C" fn bn_from_montgomery_in_place(
     mut r: *mut BN_ULONG,
     mut num_r: size_t,
     mut a: *mut BN_ULONG,
@@ -117,7 +117,7 @@ pub unsafe extern "C" fn GFp_bn_from_montgomery_in_place(
     let mut carry: BN_ULONG = 0 as std::os::raw::c_int as BN_ULONG;
     let mut i: size_t = 0 as std::os::raw::c_int as size_t;
     while i < num_n {
-        let mut v: BN_ULONG = GFp_limbs_mul_add_limb(
+        let mut v: BN_ULONG = limbs_mul_add_limb(
             a.offset(i as isize),
             n,
             (*a.offset(i as isize)).wrapping_mul(n0),
@@ -146,7 +146,7 @@ pub unsafe extern "C" fn GFp_bn_from_montgomery_in_place(
     return 1 as std::os::raw::c_int;
 }
 #[no_mangle]
-pub unsafe extern "C" fn GFp_bn_mul_mont(
+pub unsafe extern "C" fn bn_mul_mont(
     mut rp: *mut BN_ULONG,
     mut ap: *const BN_ULONG,
     mut bp: *const BN_ULONG,
@@ -163,7 +163,7 @@ pub unsafe extern "C" fn GFp_bn_mul_mont(
     }
     let mut i_0: size_t = 0 as std::os::raw::c_int as size_t;
     while i_0 < num {
-        *tmp.as_mut_ptr().offset(num.wrapping_add(i_0) as isize) = GFp_limbs_mul_add_limb(
+        *tmp.as_mut_ptr().offset(num.wrapping_add(i_0) as isize) = limbs_mul_add_limb(
             tmp.as_mut_ptr().offset(i_0 as isize),
             ap,
             *bp.offset(i_0 as isize),
@@ -171,7 +171,7 @@ pub unsafe extern "C" fn GFp_bn_mul_mont(
         );
         i_0 = i_0.wrapping_add(1);
     }
-    let _ = GFp_bn_from_montgomery_in_place(
+    bn_from_montgomery_in_place(
         rp,
         num,
         tmp.as_mut_ptr(),

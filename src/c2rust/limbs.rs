@@ -537,7 +537,7 @@ pub unsafe extern "C" fn LIMB_shr(mut a: Limb, mut shift: size_t) -> Limb {
     return a >> shift;
 }
 #[no_mangle]
-pub unsafe extern "C" fn GFp_limbs_mul_add_limb(
+pub unsafe extern "C" fn limbs_mul_add_limb(
     mut r: *mut Limb,
     mut a: *const Limb,
     mut b: Limb,

@@ -71,7 +71,7 @@
 // internally.
 // rkyv(xous) is not compatible with unused_qualifications
 // #![deny(missing_docs, unused_qualifications, variant_size_differences)]
-#![forbid(unused_results)]
+//#![forbid(unused_results)]
 #![no_std]
 
 #[cfg(feature = "alloc")]
@@ -138,10 +138,10 @@ mod sealed {
     pub trait Sealed {}
 }
 
-#[cfg(target_os="xous")]
+//#[cfg(target_os="xous")]
 mod c2rust {
     mod aes_nohw;
-    mod montgomery;
+    pub mod montgomery;
     mod montgomery_inv;
     mod limbs;
     mod mem;
@@ -149,23 +149,22 @@ mod c2rust {
     mod crypto;
     mod curve25519;
     mod ecp_nistz;
-    mod ecp_nistz256;
+    // mod ecp_nistz256;
     mod gfp_p256;
     mod gfp_p384;
     mod p256;
 }
-mod p256;
 
 #[cfg(target_os="xous")]
 mod xous_rand;
 #[cfg(target_os="xous")]
 pub mod xous_test;
 
-#[cfg(target_os="xous")]
+// #[cfg(target_os="xous")]
 type c_char = i8;
-#[cfg(target_os="xous")]
+// #[cfg(target_os="xous")]
 type c_uint = u32;
-#[cfg(target_os="xous")]
+// #[cfg(target_os="xous")]
 #[export_name = "__assert_fail"]
 pub unsafe extern "C" fn __assert_fail(
     __assertion: *const c_char,

@@ -95,13 +95,13 @@ unsafe extern "C" fn poly1305_update(
     let mut j: size_t = 0;
     let mut mp: [uint8_t; 16] = [0; 16];
     if len < 16 as std::os::raw::c_int as std::os::raw::c_uint {
-        current_block = 2923024388715992250;
+        current_block = 11683264760972913487;
     } else {
-        current_block = 16701347803359009348;
+        current_block = 10670799595495928196;
     }
     loop {
         match current_block {
-            16701347803359009348 => {
+            10670799595495928196 => {
                 t0 = U8TO32_LE(in_0);
                 t1 = U8TO32_LE(in_0.offset(4 as std::os::raw::c_int as isize));
                 t2 = U8TO32_LE(in_0.offset(8 as std::os::raw::c_int as isize));
@@ -244,9 +244,9 @@ unsafe extern "C" fn poly1305_update(
             .wrapping_add(b.wrapping_mul(5 as std::os::raw::c_int as std::os::raw::c_uint))
             as uint32_t as uint32_t;
         if len >= 16 as std::os::raw::c_int as std::os::raw::c_uint {
-            current_block = 16701347803359009348;
+            current_block = 10670799595495928196;
         } else {
-            current_block = 2923024388715992250;
+            current_block = 11683264760972913487;
         }
     }
 }

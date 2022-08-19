@@ -231,7 +231,7 @@ pub mod curve;
 pub mod ecdh;
 pub mod ecdsa;
 
-mod ops;
+pub mod ops;
 
 mod private_key;
 mod public_key;

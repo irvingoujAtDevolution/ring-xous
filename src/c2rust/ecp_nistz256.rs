@@ -6,14 +6,10 @@ extern crate std;
 
 use std::arch::asm;
 extern "C" {
-    fn __assert_fail(
-        __assertion: *const std::os::raw::c_char,
-        __file: *const std::os::raw::c_char,
-        __line: std::os::raw::c_uint,
-        __function: *const std::os::raw::c_char,
-    ) -> !;
-    fn LIMBS_are_zero(a: *const Limb, num_limbs: size_t) -> Limb;
-    fn LIMBS_equal(a: *const Limb, b: *const Limb, num_limbs: size_t) -> Limb;
+    fn GFp_nistz256_select_w7(out: *mut P256_POINT_AFFINE, table: *const Limb, index: crypto_word);
+    fn GFp_nistz256_select_w5(out: *mut P256_POINT, table: *const P256_POINT, index: crypto_word);
+    fn GFp_nistz256_sqr_mont(res: *mut Limb, a: *const Limb);
+    fn LIMBS_shl_mod(r: *mut Limb, a: *const Limb, m: *const Limb, num_limbs: size_t);
     fn LIMBS_sub_mod(
         r: *mut Limb,
         a: *const Limb,
@@ -21,10 +17,14 @@ extern "C" {
         m: *const Limb,
         num_limbs: size_t,
     );
-    fn LIMBS_shl_mod(r: *mut Limb, a: *const Limb, m: *const Limb, num_limbs: size_t);
-    fn GFp_nistz256_select_w7(out: *mut P256_POINT_AFFINE, table: *const Limb, index: crypto_word);
-    fn GFp_nistz256_select_w5(out: *mut P256_POINT, table: *const P256_POINT, index: crypto_word);
-    fn GFp_nistz256_sqr_mont(res: *mut Limb, a: *const Limb);
+    fn LIMBS_equal(a: *const Limb, b: *const Limb, num_limbs: size_t) -> Limb;
+    fn LIMBS_are_zero(a: *const Limb, num_limbs: size_t) -> Limb;
+    fn __assert_fail(
+        __assertion: *const std::os::raw::c_char,
+        __file: *const std::os::raw::c_char,
+        __line: std::os::raw::c_uint,
+        __function: *const std::os::raw::c_char,
+    ) -> !;
     fn GFp_nistz256_point_add_affine(
         r: *mut P256_POINT,
         a: *const P256_POINT,

@@ -86,14 +86,6 @@ unsafe extern "C" fn value_barrier_u32(mut a: uint32_t) -> uint32_t {
     return a;
 }
 #[inline]
-unsafe extern "C" fn fe_limbs_copy(mut r: *mut fe_limb_t, mut a: *const fe_limb_t) {
-    let mut i: size_t = 0 as std::os::raw::c_int as size_t;
-    while i < 10 as std::os::raw::c_int as std::os::raw::c_uint {
-        *r.offset(i as isize) = *a.offset(i as isize);
-        i = i.wrapping_add(1);
-    }
-}
-#[inline]
 unsafe extern "C" fn GFp_memcpy(
     mut dst: *mut std::os::raw::c_void,
     mut src: *const std::os::raw::c_void,
@@ -114,6 +106,14 @@ unsafe extern "C" fn GFp_memset(
         return dst;
     }
     return memset(dst, c, n);
+}
+#[inline]
+unsafe extern "C" fn fe_limbs_copy(mut r: *mut fe_limb_t, mut a: *const fe_limb_t) {
+    let mut i: size_t = 0 as std::os::raw::c_int as size_t;
+    while i < 10 as std::os::raw::c_int as std::os::raw::c_uint {
+        *r.offset(i as isize) = *a.offset(i as isize);
+        i = i.wrapping_add(1);
+    }
 }
 static mut d: fe = {
     let mut init = fe {

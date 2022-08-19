@@ -1240,8 +1240,8 @@ fn limbs_mont_mul(r: &mut [Limb], a: &[Limb], m: &[Limb], n0: &N0) {
 }
 
 fn limbs_from_mont_in_place(r: &mut [Limb], tmp: &mut [Limb], m: &[Limb], n0: &N0) {
-    extern "C" {
-        fn GFp_bn_from_montgomery_in_place(
+    prefixed_extern! {
+        fn bn_from_montgomery_in_place(
             r: *mut Limb,
             num_r: c::size_t,
             a: *mut Limb,
@@ -1252,14 +1252,14 @@ fn limbs_from_mont_in_place(r: &mut [Limb], tmp: &mut [Limb], m: &[Limb], n0: &N
         ) -> bssl::Result;
     }
     Result::from(unsafe {
-        GFp_bn_from_montgomery_in_place(
+        bn_from_montgomery_in_place(
             r.as_mut_ptr(),
             r.len(),
             tmp.as_mut_ptr(),
             tmp.len(),
             m.as_ptr(),
             m.len(),
-            &n0,
+            n0,
         )
     })
     .unwrap()
@@ -1271,6 +1271,24 @@ fn limbs_from_mont_in_place(r: &mut [Limb], tmp: &mut [Limb], m: &[Limb], n0: &N
     target_arch = "x86_64",
     target_arch = "x86"
 )))]
+fn limbs_mul(r: &mut [Limb], a: &[Limb], b: &[Limb]) {
+    debug_assert_eq!(r.len(), 2 * a.len());
+    debug_assert_eq!(a.len(), b.len());
+    let ab_len = a.len();
+
+    r[..ab_len].fill(0);
+    for (i, &b_limb) in b.iter().enumerate() {
+        r[ab_len + i] = unsafe {
+            limbs_mul_add_limb(
+                (&mut r[i..][..ab_len]).as_mut_ptr(),
+                a.as_ptr(),
+                b_limb,
+                ab_len,
+            )
+        };
+    }
+}
+/*
 fn limbs_mul(r: &mut [Limb], a: &[Limb], b: &[Limb]) {
     debug_assert_eq!(r.len(), 2 * a.len());
     debug_assert_eq!(a.len(), b.len());
@@ -1288,7 +1306,7 @@ fn limbs_mul(r: &mut [Limb], a: &[Limb], b: &[Limb]) {
         };
     }
 }
-
+*/
 /// r = a * b
 #[cfg(not(target_arch = "x86_64"))]
 fn limbs_mont_product(r: &mut [Limb], a: &[Limb], b: &[Limb], m: &[Limb], n0: &N0) {
