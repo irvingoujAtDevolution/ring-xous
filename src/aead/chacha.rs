@@ -14,13 +14,13 @@
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 use super::{counter, iv::Iv, quic::Sample, BLOCK_LEN};
-#[cfg(all(not(target_arch = "x86_64"), target_os = "xous"))]
+#[cfg(any(all(not(target_arch = "x86_64"), target_os = "xous"),target_family="wasm"))]
 use crate::polyfill::ChunksFixedMut;
-#[cfg(all(not(target_arch = "x86_64"), target_os = "xous"))]
+#[cfg(any(all(not(target_arch = "x86_64"), target_os = "xous"),target_family="wasm"))]
 use core::ops::RangeFrom;
 use crate::endian::*;
 
-#[cfg(all(not(target_arch = "x86_64"), target_os = "xous"))]
+#[cfg(any(all(not(target_arch = "x86_64"), target_os = "xous"),target_family="wasm"))]
 pub(super) fn ChaCha20_ctr32(
     key: &Key,
     counter: Counter,
@@ -66,7 +66,7 @@ pub(super) fn ChaCha20_ctr32(
 
 // Performs 20 rounds of ChaCha on `input`, storing the result in `output`.
 #[inline(always)]
-#[cfg(all(not(target_arch = "x86_64"), target_os = "xous"))]
+#[cfg(any(all(not(target_arch = "x86_64"), target_os = "xous"),target_family="wasm"))]
 fn chacha_core(output: &mut [u8; BLOCK_LEN * 4], input: &State) {
     let mut x = *input;
 
@@ -91,7 +91,7 @@ fn chacha_core(output: &mut [u8; BLOCK_LEN * 4], input: &State) {
 }
 
 #[inline(always)]
-#[cfg(all(not(target_arch = "x86_64"), target_os = "xous"))]
+#[cfg(any(all(not(target_arch = "x86_64"), target_os = "xous"),target_family="wasm"))]
 fn quarterround(x: &mut State, a: usize, b: usize, c: usize, d: usize) {
     #[inline(always)]
     fn step(x: &mut State, a: usize, b: usize, c: usize, rotation: u32) {
@@ -103,7 +103,7 @@ fn quarterround(x: &mut State, a: usize, b: usize, c: usize, d: usize) {
     step(x, a, b, d, 8);
     step(x, c, d, b, 7);
 }
-#[cfg(all(not(target_arch = "x86_64"), target_os = "xous"))]
+#[cfg(any(all(not(target_arch = "x86_64"), target_os = "xous"),target_family="wasm"))]
 type State = [u32; BLOCK_LEN];
 
 #[repr(transparent)]
@@ -182,7 +182,7 @@ impl Key {
     }
 
     #[inline] // Optimize away match on `counter.`
-    #[cfg(not(target_arch="riscv32"))]
+    #[cfg(not(any(target_arch="riscv32",target_family="wasm")))]
     unsafe fn encrypt(
         &self,
         counter: CounterOrIv,
@@ -215,7 +215,7 @@ impl Key {
 
     /// This is "less safe" because it skips the important check that `encrypt_within` does.
     /// It assumes `src` equals `0..`, which is checked and corrected by `encrypt_within`.
-    #[cfg(all(not(target_arch = "x86_64"), target_os = "xous"))]
+    #[cfg(any(all(not(target_arch = "x86_64"), target_os = "xous"),target_family="wasm"))]
     #[inline] // Optimize away match on `counter.`
     unsafe fn encrypt(
         &self,
@@ -236,7 +236,7 @@ impl Key {
         ChaCha20_ctr32(self, ctr, in_out, 0..);
     }
 
-    #[cfg(any(target_arch = "x86_64", target_os = "xous"))]
+    #[cfg(any(all(not(target_arch = "x86_64"), target_os = "xous"),target_family="wasm"))]
     #[inline]
     pub(super) fn words_less_safe(&self) -> &[LittleEndian<u32>; KEY_LEN / 4] {
         &self.0
@@ -274,6 +274,43 @@ mod tests {
     #[test]
     pub fn chacha20_tests() {
         test::run(test_file!("chacha_tests.txt"), |section, test_case| {
+            assert_eq!(section, "");
+
+            let key = test_case.consume_bytes("Key");
+            let key: &[u8; KEY_LEN] = key.as_slice().try_into()?;
+            let key = Key::from(*key);
+
+            let ctr = test_case.consume_usize("Ctr");
+            let nonce = test_case.consume_bytes("Nonce");
+            let input = test_case.consume_bytes("Input");
+            let output = test_case.consume_bytes("Output");
+
+            // Pre-allocate buffer for use in test_cases.
+            let mut in_out_buf = vec![0u8; input.len() + 276];
+
+            // Run the test case over all prefixes of the input because the
+            // behavior of ChaCha20 implementation changes dependent on the
+            // length of the input.
+            for len in 0..(input.len() + 1) {
+                chacha20_test_case_inner(
+                    &key,
+                    &nonce,
+                    ctr as u32,
+                    &input[..len],
+                    &output[..len],
+                    len,
+                    &mut in_out_buf,
+                );
+            }
+
+            Ok(())
+        });
+    }
+
+    
+    #[test]
+    fn test_encrypt_functions() {
+          test::run(test_file!("chacha_tests.txt"), |section, test_case| {
             assert_eq!(section, "");
 
             let key = test_case.consume_bytes("Key");
